@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Pin exact versions everywhere below — do **not** install with `@latest`. As of this plan, `prisma`'s npm `latest` tag resolves to an unstable `8.0.0-rc.15` while `@prisma/client`'s `latest` is the stable `7.10.0`; installing both with `@latest` installs mismatched majors and breaks the client. Use `prisma@7.10.0`, `@prisma/client@7.10.0`, `@prisma/adapter-better-sqlite3@7.10.0`, `dotenv@18.0.1`, `tsx@4.23.15`, `@tanstack/react-query@5.103.1`.
+- Pin exact versions everywhere below — do **not** install with `@latest`. As of this plan, `prisma`'s npm `latest` tag resolves to an unstable `8.0.0-rc.15` while `@prisma/client`'s `latest` is the stable `7.10.0`; installing both with `@latest` installs mismatched majors and breaks the client. Use `prisma@7.10.0`, `@prisma/client@7.10.0`, `@prisma/adapter-better-sqlite3@7.10.0`, `dotenv@18.0.1`, `tsx@4.23.13`, `@tanstack/react-query@5.103.1`. `tsx` is deliberately pinned two patches behind the latest (`4.23.15`) rather than to latest: `4.23.15`/`4.23.14` were both published the same day this plan was written, which trips pnpm's `minimum-release-age` supply-chain safeguard (it blocks installing packages published too recently, to leave a window for the community to catch a compromised-maintainer publish). `4.23.13` (published three weeks earlier) clears that safeguard with no bypass needed — do not add `minimumReleaseAgeExclude` to `pnpm-workspace.yaml` to work around this; re-pin to an older, already-aged version instead, the same way this constraint was resolved here.
 - **Prisma 7's `PrismaClient` requires an explicit driver adapter — there is no zero-argument constructor.** `new PrismaClient()` throws `PrismaClientInitializationError` at runtime. Every instantiation must pass `{ adapter: new PrismaBetterSqlite3({ url: ... }) }`. This was verified empirically against the real installed package (Task 1's steps below), not assumed from prior Prisma versions.
 - Prisma 7's default generator is `provider = "prisma-client"` (not the older `prisma-client-js`), which emits plain `.ts` source into an `output` directory rather than an installable package under `node_modules/@prisma/client`. `@prisma/client` is still a required runtime dependency (it supplies `@prisma/client/runtime/client`, which the generated code imports), but the `PrismaClient` class and model types are imported from the generated output, not from `@prisma/client` directly.
 - Datasource configuration lives in `prisma.config.ts` (via `defineConfig`), not inline in `schema.prisma`. `schema.prisma`'s `datasource` block has no `url` line. `prisma.config.ts` loads `.env` itself via `import 'dotenv/config'` — this only affects Prisma CLI/seed execution; Next.js loads `.env` for the app itself independently, so application code never needs that import.
@@ -201,7 +201,7 @@ git commit -m "Add Prisma schema, client, and shared types"
 - [ ] **Step 1: Install tsx**
 
 ```bash
-pnpm add -D tsx@4.23.15
+pnpm add -D tsx@4.23.13
 ```
 
 - [ ] **Step 2: Add the seed command to `prisma.config.ts`**
