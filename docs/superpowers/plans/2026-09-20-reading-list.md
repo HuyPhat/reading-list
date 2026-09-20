@@ -22,14 +22,16 @@
 - No uniqueness constraint on `ReadingItem` beyond its primary key, and no duplicate-detection logic in `createItem`. No indexes beyond what `@id`/`@unique` create automatically.
 - Every mutating Server Action calls `revalidatePath` for every route its change affects; none call `router.refresh()` (redundant — Server Actions invoked from the tree already trigger a same-response re-render of the calling route). A `revalidatePath` call that uses the `'page'`/`'layout'` type argument for a route nested inside the `(main)` route group must include the group segment in the path, e.g. `revalidatePath('/(main)/items/[id]', 'page')` — verified against the Next.js 16 docs: pattern-based revalidation matches route *file structure*, which includes route groups, while literal-path revalidation (no type argument) matches the resolved URL, which does not.
 - `error.tsx` files use the `retry` prop (stable since Next.js 16.3, confirmed in the bundled docs), not `reset` — `retry()` re-fetches and re-renders the segment, which is what "try again" should do here; `reset()` only clears error state without re-fetching.
-- No automated test framework is introduced (per the spec). Verification per task is manual: `npx tsc --noEmit` for type correctness, `sqlite3`/`curl` for data and read-path checks, and the Claude Browser tool (or your own browser at `http://localhost:3000`) for anything that requires submitting a form or clicking a button tied to a Server Action.
-- Run all commands from the project root: `/Users/hle/nextjs/reading-list`.
+- No automated test framework is introduced (per the spec). Verification per task is manual: `pnpm exec tsc --noEmit` for type correctness, `sqlite3`/`curl` for data and read-path checks, and the Claude Browser tool (or your own browser at `http://localhost:3000`) for anything that requires submitting a form or clicking a button tied to a Server Action.
+- **Package manager is pnpm, not npm.** Use `pnpm add <pkg>@<version>` (add `-D` for dev dependencies), `pnpm <script>` for `package.json` scripts (e.g. `pnpm dev`, `pnpm lint`), and `pnpm exec <bin>` for locally-installed CLI tools (e.g. `pnpm exec prisma ...`, `pnpm exec tsc ...`). The lockfile is `pnpm-lock.yaml`, not `package-lock.json`. A root `.npmrc` with `save-exact=true` (created in Task 1) makes every `pnpm add` pin an exact version automatically, without needing `--save-exact` on each call.
+- Run all commands from the project root: `/Users/hle/nextjs/reading-list/.claude/worktrees/reading-list-app` (this plan executes inside a git worktree set up for it — do not run commands from the original repo checkout).
 
 ---
 
 ### Task 1: Prisma schema, client, and shared types
 
 **Files:**
+- Create: `.npmrc`
 - Create: `prisma/schema.prisma`
 - Create: `prisma.config.ts`
 - Create: `.env`
@@ -41,11 +43,19 @@
 - Produces: `prisma` (default `PrismaClient` instance, `src/lib/prisma.ts`) — every later task's data access goes through this.
 - Produces: `Status` (`'TO_READ' | 'READING' | 'DONE'`), `STATUSES: Status[]`, `STATUS_LABELS: Record<Status, string>`, `ReadingItemWithTags` (`ReadingItem & { tags: Tag[] }`) — all from `src/lib/types.ts`.
 
+- [ ] **Step 0: Create `.npmrc`**
+
+```
+save-exact=true
+```
+
+This makes every `pnpm add` from here on pin the exact resolved version in `package.json` (no `^` range), matching this plan's "pin exact versions" constraint without needing to remember a flag on every call.
+
 - [ ] **Step 1: Install dependencies**
 
 ```bash
-npm install @prisma/client@7.10.0 @prisma/adapter-better-sqlite3@7.10.0
-npm install --save-dev prisma@7.10.0 dotenv@18.0.1
+pnpm add @prisma/client@7.10.0 @prisma/adapter-better-sqlite3@7.10.0
+pnpm add -D prisma@7.10.0 dotenv@18.0.1
 ```
 
 - [ ] **Step 2: Create `.env`**
@@ -105,8 +115,8 @@ export default defineConfig({
 - [ ] **Step 5: Run the initial migration, then generate the client**
 
 ```bash
-npx prisma migrate dev --name init
-npx prisma generate
+pnpm exec prisma migrate dev --name init
+pnpm exec prisma generate
 ```
 
 Expected: `migrate dev` creates `prisma/migrations/<timestamp>_init/migration.sql` and `prisma/dev.db`. Verified empirically that `migrate dev` does **not** reliably auto-generate the client with this generator — run `prisma generate` explicitly as a separate step; it prints `✔ Generated Prisma Client (7.10.0) to ./src/generated/prisma`.
@@ -162,7 +172,7 @@ export type ReadingItemWithTags = ReadingItem & { tags: Tag[] }
 - [ ] **Step 9: Verify**
 
 ```bash
-npx tsc --noEmit
+pnpm exec tsc --noEmit
 sqlite3 prisma/dev.db ".tables"
 ```
 
@@ -171,7 +181,7 @@ Expected: `tsc` reports no errors. `.tables` lists `ReadingItem`, `Tag`, `_prism
 - [ ] **Step 10: Commit**
 
 ```bash
-git add prisma prisma.config.ts .gitignore src/lib/prisma.ts src/lib/types.ts package.json package-lock.json
+git add .npmrc prisma prisma.config.ts .gitignore src/lib/prisma.ts src/lib/types.ts package.json pnpm-lock.yaml
 git commit -m "Add Prisma schema, client, and shared types"
 ```
 
@@ -191,7 +201,7 @@ git commit -m "Add Prisma schema, client, and shared types"
 - [ ] **Step 1: Install tsx**
 
 ```bash
-npm install --save-dev tsx@4.23.15
+pnpm add -D tsx@4.23.15
 ```
 
 - [ ] **Step 2: Add the seed command to `prisma.config.ts`**
@@ -269,7 +279,7 @@ main()
 - [ ] **Step 4: Run the seed**
 
 ```bash
-npx prisma db seed
+pnpm exec prisma db seed
 ```
 
 Expected: `🌱 The seed command has been executed.`
@@ -287,7 +297,7 @@ Expected: 10 items, 9 tags, and a status breakdown of `DONE|3`, `READING|2`, `TO
 - [ ] **Step 6: Commit**
 
 ```bash
-git add prisma.config.ts prisma/seed.ts package.json package-lock.json
+git add prisma.config.ts prisma/seed.ts package.json pnpm-lock.yaml
 git commit -m "Add seed script with sample reading list data"
 ```
 
@@ -358,7 +368,7 @@ export default function AboutPage() {
 - [ ] **Step 4: Verify**
 
 ```bash
-npm run dev &
+pnpm dev &
 sleep 3
 curl -s http://localhost:3000/about | grep -o "Reading List is a personal app"
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/
@@ -457,7 +467,7 @@ export default async function HomePage() {
 - [ ] **Step 3: Verify**
 
 ```bash
-npm run dev &
+pnpm dev &
 sleep 3
 curl -s http://localhost:3000/ | grep -o "Atomic Habits"
 curl -s http://localhost:3000/ | grep -o "Sapiens"
@@ -666,7 +676,7 @@ export default async function TagsPage() {
 - [ ] **Step 5: Verify reads with curl**
 
 ```bash
-npm run dev &
+pnpm dev &
 sleep 3
 curl -s http://localhost:3000/tags | grep -o "programming"
 curl -s http://localhost:3000/tags | grep -o "9 items\|1 item" # at least one tag's count renders
@@ -961,7 +971,7 @@ export default function ItemNotFound() {
 - [ ] **Step 5: Verify reads and not-found with curl**
 
 ```bash
-npm run dev &
+pnpm dev &
 sleep 3
 ID=$(sqlite3 prisma/dev.db "SELECT id FROM ReadingItem WHERE title = 'Atomic Habits';")
 curl -s http://localhost:3000/items/$ID | grep -o "Atomic Habits"
@@ -1002,7 +1012,7 @@ git commit -m "Add item detail page with mark-as-done action"
 - [ ] **Step 1: Install TanStack Query**
 
 ```bash
-npm install @tanstack/react-query@5.103.1
+pnpm add @tanstack/react-query@5.103.1
 ```
 
 - [ ] **Step 2: Write `src/components/query-provider.tsx`**
@@ -1202,7 +1212,7 @@ export default async function HomePage() {
 - [ ] **Step 7: Verify the Route Handler with curl**
 
 ```bash
-npm run dev &
+pnpm dev &
 sleep 3
 curl -s "http://localhost:3000/api/items?status=DONE" | grep -o "\"status\":\"DONE\"" | wc -l
 curl -s "http://localhost:3000/api/items?search=atomic" | grep -o "Atomic Habits"
@@ -1218,7 +1228,7 @@ Navigate to `/`. Type `atomic` into the search box. Confirm the list narrows to 
 - [ ] **Step 9: Commit**
 
 ```bash
-git add src/components/query-provider.tsx src/app/layout.tsx src/app/api src/components/filter-bar.tsx src/app/\(main\)/page.tsx package.json package-lock.json
+git add src/components/query-provider.tsx src/app/layout.tsx src/app/api src/components/filter-bar.tsx src/app/\(main\)/page.tsx package.json pnpm-lock.yaml
 git commit -m "Add search/filter bar via TanStack Query and Route Handler"
 ```
 
@@ -1341,29 +1351,37 @@ git commit -m "Add loading skeletons and error boundaries for list and detail ro
 
 - [ ] **Step 1: Add a Prisma setup step to Getting Started**
 
-In `README.md`, change:
+In `README.md`, the current "Getting Started" section reads:
 
 ```markdown
 First, run the development server:
 
 ```bash
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 ```
 
-to:
+Replace it with (this project is pinned to pnpm — see `.npmrc`/`pnpm-lock.yaml` — so drop the multi-package-manager boilerplate rather than leaving alternatives that don't match the committed lockfile):
 
 ```markdown
 First, set up the database and seed it with sample data:
 
 ```bash
-npx prisma migrate dev
-npx prisma db seed
+pnpm exec prisma migrate dev
+pnpm exec prisma db seed
 ```
 
 Then run the development server:
 
 ```bash
-npm run dev
+pnpm dev
+```
 ```
 
 - [ ] **Step 2: Add the concepts section**
