@@ -26,3 +26,12 @@ export async function createItem(formData: FormData): Promise<void> {
 
   revalidatePath('/')
 }
+
+export async function markAsDone(id: string): Promise<void> {
+  await prisma.readingItem.update({
+    where: { id },
+    data: { status: 'DONE' },
+  })
+  revalidatePath(`/items/${id}`)
+  revalidatePath('/')
+}
