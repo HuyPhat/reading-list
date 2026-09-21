@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
-import { ReadingItemCard } from '@/components/reading-item-card'
 import { AddItemForm } from '@/components/add-item-form'
+import { FilterBar } from '@/components/filter-bar'
 
 export default async function HomePage() {
   const [items, tags] = await Promise.all([
@@ -17,10 +17,8 @@ export default async function HomePage() {
       <div className="mt-6">
         <AddItemForm tags={tags} />
       </div>
-      <div className="mt-6 space-y-4">
-        {items.map((item) => (
-          <ReadingItemCard key={item.id} item={item} />
-        ))}
+      <div className="mt-6">
+        <FilterBar initialItems={items} allTags={tags} />
       </div>
     </div>
   )
