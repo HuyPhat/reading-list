@@ -2,23 +2,33 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+First, set up the database and seed it with sample data:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm exec prisma migrate dev
+pnpm exec prisma db seed
+```
+
+Then run the development server:
+
+```bash
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## App Router Concepts Exercised
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project was built to practice the following Next.js App Router patterns:
+
+- **Server Components fetching data directly** — `page.tsx` for the list, detail, and tags routes query Prisma with no client-side fetch or API layer in between.
+- **Client Components at interactivity boundaries only** — `MarkDoneButton`, `FilterBar`, `TagDeleteButton`, `CreateTagForm`, and `QueryProvider` are `'use client'` because they specifically need state, event handlers, or a browser-only hook; everything else stays a Server Component by default.
+- **Server Actions vs. a Route Handler** — `createItem`, `markAsDone`, `createTag`, and `deleteTag` are Server Actions, invoked directly from forms/buttons in the tree, because each is a same-origin mutation tied to specific UI. `GET /api/items` is a Route Handler because it's fetched by TanStack Query's `useQuery`, which needs a real URL to call.
+- **On-demand revalidation with `revalidatePath`** — every mutating Server Action invalidates exactly the routes it affects, including the pattern-based form (`revalidatePath('/(main)/items/[id]', 'page')`) for invalidating every dynamic detail page at once.
+- **Dynamic route segments** — `app/(main)/items/[id]/page.tsx`, with the `params` prop as a `Promise` that must be awaited.
+- **Route groups** — `(main)` shares one nav/layout across `/`, `/tags`, `/about`, and `/items/[id]` without adding a segment to the URL.
+- **`loading.tsx` / `error.tsx` / `not-found.tsx` file conventions** — automatic Suspense fallbacks, a Client Component error boundary using the `retry()` recovery function, and `notFound()` for an invalid item id.
+- **TanStack Query alongside the RSC data model** — the list page's initial render comes from a Server Component, while the search/filter bar layers client-side fetching and caching on top via a Route Handler, illustrating both data-fetching models in the same page.
 
 ## Learn More
 
