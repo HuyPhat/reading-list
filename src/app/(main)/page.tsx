@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma'
 import { AddItemForm } from '@/components/add-item-form'
 import { FilterBar } from '@/components/filter-bar'
 
+export const dynamic = 'force-dynamic'
+
 export default async function HomePage() {
   const [items, tags] = await Promise.all([
     prisma.readingItem.findMany({

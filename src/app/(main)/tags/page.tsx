@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma'
 import { CreateTagForm } from '@/components/create-tag-form'
 import { TagDeleteButton } from '@/components/tag-delete-button'
 
+export const dynamic = 'force-dynamic'
+
 export default async function TagsPage() {
   const tags = await prisma.tag.findMany({
     include: { _count: { select: { items: true } } },

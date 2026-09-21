@@ -2,7 +2,19 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, set up the database and seed it with sample data:
+First, install dependencies (this also runs `prisma generate` via the `postinstall` script):
+
+```bash
+pnpm install
+```
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Then set up the database and seed it with sample data:
 
 ```bash
 pnpm exec prisma migrate dev
