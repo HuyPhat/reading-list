@@ -1,9 +1,26 @@
+'use client'
+
+import { useTransition } from 'react'
+import type { FormEvent } from 'react'
 import { createItem } from '@/lib/actions/items'
 import type { Tag } from '@/generated/prisma/client'
 
-export function AddItemForm({ tags }: { tags: Tag[] }) {
+export function AddItemForm({ tags, onSuccess }: { tags: Tag[]; onSuccess?: () => void }) {
+  const [isPending, startTransition] = useTransition()
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const form = e.currentTarget
+    const formData = new FormData(form)
+    startTransition(async () => {
+      await createItem(formData)
+      form.reset()
+      onSuccess?.()
+    })
+  }
+
   return (
-    <form action={createItem} className="space-y-4 rounded-lg border border-gray-200 p-4">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-gray-200 p-4">
       <div>
         <label className="block text-sm font-medium text-gray-700">Title</label>
         <input name="title" required className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm" />
@@ -33,8 +50,12 @@ export function AddItemForm({ tags }: { tags: Tag[] }) {
           </div>
         </div>
       )}
-      <button type="submit" className="rounded bg-gray-900 px-4 py-2 text-sm text-white">
-        Add item
+      <button
+        type="submit"
+        disabled={isPending}
+        className="rounded bg-gray-900 px-4 py-2 text-sm text-white disabled:opacity-50"
+      >
+        {isPending ? 'Adding…' : 'Add item'}
       </button>
     </form>
   )
