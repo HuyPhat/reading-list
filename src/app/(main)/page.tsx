@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { AddItemForm } from '@/components/add-item-form'
+import { AddItemDialog } from '@/components/add-item-dialog'
 import { FilterBar } from '@/components/filter-bar'
 
 export const dynamic = 'force-dynamic'
@@ -17,11 +17,9 @@ export default async function HomePage() {
     <div>
       <h1 className="text-2xl font-bold text-gray-900">Reading List</h1>
       <div className="mt-6">
-        <AddItemForm tags={tags} />
-      </div>
-      <div className="mt-6">
         <FilterBar initialItems={items} allTags={tags} />
       </div>
+      <AddItemDialog tags={tags} />
     </div>
   )
 }
