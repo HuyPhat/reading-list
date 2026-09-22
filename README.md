@@ -1,3 +1,5 @@
+![CI](https://github.com/HuyPhat/reading-list/actions/workflows/ci.yml/badge.svg)
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
@@ -28,6 +30,14 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Available Commands
+
+- `pnpm dev` — Start the development server
+- `pnpm build` — Build the app for production
+- `pnpm start` — Start the production server
+- `pnpm type-check` — Generate Next.js route types and run TypeScript type-checking
+- `pnpm lint` — Run ESLint on the codebase
 
 ## App Router Concepts Exercised
 
