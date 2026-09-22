@@ -36,11 +36,8 @@ jobs:
       - name: Seed database
         run: pnpm exec prisma db seed
 
-      - name: Generate Next.js route types
-        run: pnpm exec next typegen
-
       - name: Type-check
-        run: pnpm exec tsc --noEmit
+        run: pnpm type-check
 
       - name: Lint
         run: pnpm lint
